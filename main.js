@@ -26,18 +26,20 @@ async function initProvider() {
   });
 }
 
+// 连接钱包函数
 async function connectWallet() {
-  if (!provider) return alert("Provider 未初始化");
+  if (!provider) {
+    log("Provider 未初始化");
+    return alert("Provider 未初始化");
+  }
 
   try {
-    // 断开旧会话，确保新会话产生新的 URI
+    log("开始连接钱包...");
     if (provider.session) {
+      log("已有旧会话，先断开", provider.session.topic);
       await provider.disconnect({
         topic: provider.session.topic,
-        reason: {
-          code: 6000,
-          message: "用户主动断开连接，准备重新连接"
-        }
+        reason: { code: 6000, message: "用户主动断开连接" }
       });
     }
 
@@ -56,35 +58,40 @@ async function connectWallet() {
     });
 
     session = connection;
+    log("连接成功，session:", session);
 
     if (connection?.uri) {
       const tpLink = `tpoutside://wc?uri=${encodeURIComponent(connection.uri)}`;
+      log("跳转 TP 钱包扫码连接:", tpLink);
       setTimeout(() => {
         window.location.href = tpLink;
       }, 300);
     } else {
+      log("没有获得 WalletConnect URI");
       alert("未获得 WalletConnect URI，无法跳转扫码");
       return;
     }
 
     if (session.namespaces?.tron?.accounts?.length > 0) {
       address = session.namespaces.tron.accounts[0].split(":")[2];
+      log("从 session 获取地址:", address);
     } else if (window.tronWeb?.defaultAddress?.base58) {
       address = window.tronWeb.defaultAddress.base58;
+      log("从 tronWeb 注入地址获取:", address);
     } else {
       alert("请在钱包中确认连接请求并确保授权地址");
+      log("无地址可用");
       return;
     }
 
     addressEl.textContent = address;
     btnTransfer.disabled = false;
-    console.log("已连接地址:", address);
+    log("已连接地址:", address);
   } catch (err) {
-    console.error("连接钱包失败:", err);
+    log("连接钱包失败:", err);
     alert("连接失败");
   }
 }
-
 
 async function sendUSDT() {
   if (!session || !provider || !address) return alert("请先连接钱包");
