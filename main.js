@@ -1,12 +1,12 @@
 import { OKXUniversalProvider } from "@walletconnect/universal-provider";
 import TronWeb from "tronweb";
 
-const PROJECT_ID = "bf2c9487fac01519f2e7e4b6266ab78d"; // 替换成你的项目ID
-const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-const RECEIVER = "TWonQDtwMakQgvZZQsLNLj7eAtZqJLJ7Hg";
-const AMOUNT = 1;
+const PROJECT_ID = "ebf467a82cce4abd6d010931cb95fff8"; // 替换为你的 WalletConnect 项目 ID
+const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // TRON 主网 USDT 合约
+const RECEIVER = "TWonQDtwMakQgvZZQsLNLj7eAtZqJLJ7Hg"; // 接收地址
+const AMOUNT = 1; // USDT 数量
 
-let provider;    // universal provider
+let provider;
 let session;
 let address = "";
 
@@ -36,38 +36,37 @@ async function connectWallet() {
           methods: [
             "tron_signTransaction",
             "tron_sendRawTransaction",
-            "tron_signMessage",
+            "tron_signMessage"
           ],
           chains: ["tron:mainnet"],
-          events: ["chainChanged", "accountsChanged"],
-        },
-      },
+          events: ["chainChanged", "accountsChanged"]
+        }
+      }
     });
 
     session = connection;
 
-    // 通常连接时会返回 accounts
+    // TP 钱包 URI 跳转（扫码）
+    if (connection?.uri) {
+      const tpLink = `tpoutside://wc?uri=${encodeURIComponent(connection.uri)}`;
+      setTimeout(() => {
+        window.location.href = tpLink;
+      }, 100);
+    }
+
+    // 获取地址（TP内置浏览器优先）
     if (session.namespaces?.tron?.accounts?.length > 0) {
       address = session.namespaces.tron.accounts[0].split(":")[2];
     } else if (window.tronWeb?.defaultAddress?.base58) {
-      // TP钱包内置浏览器环境下优先使用注入地址
       address = window.tronWeb.defaultAddress.base58;
     } else {
-      // 如果没地址，提示用户确认连接
       alert("请在钱包中确认连接请求并确保已授权账户");
       return;
     }
 
     addressEl.textContent = address;
     btnTransfer.disabled = false;
-
-    // 跳转 TP 钱包协议，扫码连接（可选）
-    if (connection.uri) {
-      const tpLink = `tpoutside://wc?uri=${encodeURIComponent(connection.uri)}`;
-      window.location.href = tpLink;
-    }
-
-    console.log("钱包地址:", address);
+    console.log("已连接地址:", address);
   } catch (err) {
     console.error("连接失败:", err);
     alert("连接钱包失败");
@@ -83,7 +82,7 @@ async function sendUSDT() {
 
     const params = [
       { type: "address", value: RECEIVER },
-      { type: "uint256", value: amountSun },
+      { type: "uint256", value: amountSun }
     ];
 
     const tx = await tronWeb.transactionBuilder.triggerSmartContract(
@@ -100,7 +99,7 @@ async function sendUSDT() {
       request: {
         method: "tron_signTransaction",
         params: [tx.transaction],
-      },
+      }
     });
 
     console.log("签名成功", signedTx);
