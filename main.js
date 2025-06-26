@@ -13,28 +13,26 @@ let address = "";
 const addressEl = document.getElementById("address");
 const btnConnect = document.getElementById("btnConnect");
 const btnTransfer = document.getElementById("btnTransfer");
-
-async function initProvider() {
-  provider = await UniversalProvider.init({
-    projectId: PROJECT_ID,
-    metadata: {
-      name: "TRON DApp",
-      description: "WalletConnect v2 + TRON",
-      url: window.location.origin,
-      icons: [],
-    },
-  });
-}
-
-// 连接钱包函数
 async function connectWallet() {
-  if (!provider) {
-    log("Provider 未初始化");
-    return alert("Provider 未初始化");
-  }
-
   try {
-    log("开始连接钱包...");
+    log("开始初始化 WalletConnect Provider...");
+    if (!provider) {
+      provider = await UniversalProvider.init({
+        projectId: PROJECT_ID,
+        metadata: {
+          name: "TRON DApp",
+          description: "WalletConnect v2 + TRON",
+          url: window.location.origin,
+          icons: [],
+        },
+      });
+      btnTransfer.disabled = true;
+      log("Provider 初始化成功");
+    } else {
+      log("Provider 已存在，跳过初始化");
+    }
+
+    // 断开已有旧会话（可选）
     if (provider.session) {
       log("已有旧会话，先断开", provider.session.topic);
       await provider.disconnect({
@@ -43,6 +41,7 @@ async function connectWallet() {
       });
     }
 
+    log("开始发起连接请求...");
     const connection = await provider.connect({
       namespaces: {
         tron: {
@@ -87,11 +86,13 @@ async function connectWallet() {
     addressEl.textContent = address;
     btnTransfer.disabled = false;
     log("已连接地址:", address);
+
   } catch (err) {
     log("连接钱包失败:", err);
     alert("连接失败");
   }
 }
+
 
 async function sendUSDT() {
   if (!session || !provider || !address) return alert("请先连接钱包");
@@ -133,4 +134,4 @@ async function sendUSDT() {
 btnConnect.addEventListener("click", connectWallet);
 btnTransfer.addEventListener("click", sendUSDT);
 
-initProvider();
+
