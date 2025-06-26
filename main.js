@@ -1,7 +1,7 @@
 import { UniversalProvider } from "@walletconnect/universal-provider";
 import TronWeb from "tronweb";
 
-const PROJECT_ID = "ebf467a82cce4abd6d010931cb95fff8"; // 替换成你自己的
+const PROJECT_ID = "1ce7c9b224829d1e578a04f4e73dd2eb"; // 替换成你自己的
 const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 const RECEIVER = "TWonQDtwMakQgvZZQsLNLj7eAtZqJLJ7Hg";
 const AMOUNT = 1;
