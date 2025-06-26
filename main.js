@@ -49,9 +49,7 @@ async function connectWallet() {
     // 跳转 TP 钱包扫码连接（用于 TP 钱包外部浏览器）
     if (connection?.uri) {
       const tpLink = `tpoutside://wc?uri=${encodeURIComponent(connection.uri)}`;
-      setTimeout(() => {
-        window.location.href = tpLink;
-      }, 300);
+      window.location.href = tpLink;
     }
 
     // 尝试获取地址（优先 session 返回）
