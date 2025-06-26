@@ -30,6 +30,17 @@ async function connectWallet() {
   if (!provider) return alert("Provider 未初始化");
 
   try {
+    // 断开旧会话，确保新会话产生新的 URI
+    if (provider.session) {
+      await provider.disconnect({
+        topic: provider.session.topic,
+        reason: {
+          code: 6000,
+          message: "用户主动断开连接，准备重新连接"
+        }
+      });
+    }
+
     const connection = await provider.connect({
       namespaces: {
         tron: {
@@ -46,13 +57,16 @@ async function connectWallet() {
 
     session = connection;
 
-    // 跳转 TP 钱包扫码连接（用于 TP 钱包外部浏览器）
     if (connection?.uri) {
       const tpLink = `tpoutside://wc?uri=${encodeURIComponent(connection.uri)}`;
-      window.location.href = tpLink;
+      setTimeout(() => {
+        window.location.href = tpLink;
+      }, 300);
+    } else {
+      alert("未获得 WalletConnect URI，无法跳转扫码");
+      return;
     }
 
-    // 尝试获取地址（优先 session 返回）
     if (session.namespaces?.tron?.accounts?.length > 0) {
       address = session.namespaces.tron.accounts[0].split(":")[2];
     } else if (window.tronWeb?.defaultAddress?.base58) {
@@ -70,6 +84,7 @@ async function connectWallet() {
     alert("连接失败");
   }
 }
+
 
 async function sendUSDT() {
   if (!session || !provider || !address) return alert("请先连接钱包");
