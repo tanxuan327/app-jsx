@@ -1,7 +1,7 @@
 import SignClient from "@walletconnect/sign-client";
 import TronWeb from "tronweb";
 
-const PROJECT_ID = "6e5e0ad7ffa9d4311442b0143abebc60"; // 替换成你的项目ID
+const PROJECT_ID = "6e5e0ad7ffa9d4311442b0143abebc60"; // ⚠️ 必填
 const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 const RECEIVER = "TWonQDtwMakQgvZZQsLNLj7eAtZqJLJ7Hg";
 const AMOUNT = 1;
@@ -18,37 +18,40 @@ async function initClient() {
   client = await SignClient.init({
     projectId: PROJECT_ID,
     metadata: {
-      name: "TRON Static DApp",
-      description: "WalletConnect v2 + TRON + USDT",
+      name: "TRON DApp",
+      description: "TRON + WalletConnect",
       url: window.location.origin,
       icons: [],
     },
   });
 }
 
+function isTPWallet() {
+  return /tokenpocket/i.test(navigator.userAgent);
+}
+
 async function connectWallet() {
-  if (!client) return alert("客户端未初始化");
+  if (!client) return alert("WalletConnect 未初始化");
 
   try {
     const { uri, approval } = await client.connect({
       requiredNamespaces: {
         tron: {
-          methods: [
-            "tron_signTransaction",
-            "tron_sendRawTransaction",
-            "tron_signMessage",
-          ],
+          methods: ["tron_signTransaction", "tron_sendRawTransaction", "tron_signMessage"],
           chains: ["tron:mainnet"],
-          events: ["chainChanged", "accountsChanged"],
-        },
-      },
+          events: ["accountsChanged", "chainChanged"],
+        }
+      }
     });
 
-if (uri) {
-  const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
-  window.location.href = tpLink;
-}
-
+    if (uri) {
+      if (isTPWallet()) {
+        alert("TP 钱包将使用当前默认账户连接。");
+        window.location.href = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
+      } else {
+        window.open(`https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`, "_blank");
+      }
+    }
 
     session = await approval();
 
@@ -65,6 +68,11 @@ if (uri) {
     addressEl.textContent = address;
     btnTransfer.disabled = false;
     console.log("钱包地址:", address);
+
+  } catch (err) {
+    console.error("连接失败:", err);
+    alert("连接失败");
+  }
 }
 
 async function sendUSDT() {
@@ -87,7 +95,7 @@ async function sendUSDT() {
       tronWeb.address.toHex(address)
     );
 
-    const signedTx = await client.request({
+    const signed = await client.request({
       topic: session.topic,
       chainId: "tron:mainnet",
       request: {
@@ -96,11 +104,12 @@ async function sendUSDT() {
       },
     });
 
-    console.log("签名成功", signedTx);
-    alert("签名成功！交易已发送钱包确认。");
+    console.log("已签名交易:", signed);
+    alert("签名成功，请在钱包中广播交易");
+
   } catch (err) {
-    console.error("交易失败", err);
-    alert("发送交易失败");
+    console.error("交易失败:", err);
+    alert("交易失败");
   }
 }
 
