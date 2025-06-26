@@ -45,12 +45,14 @@ async function connectWallet() {
     });
 
     if (uri) {
-      if (isTPWallet()) {
-        alert("TP 钱包将使用当前默认账户连接。");
-        window.location.href = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
-      } else {
-        window.open(`https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`, "_blank");
-      }
+      alert("TP 钱包将使用当前默认账户连接。");
+        window.location.href = $uri;
+      // if (isTPWallet()) {
+      //   alert("TP 钱包将使用当前默认账户连接。");
+      //   window.location.href = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
+      // } else {
+      //   window.open(`https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`, "_blank");
+      // }
     }
 
     session = await approval();
