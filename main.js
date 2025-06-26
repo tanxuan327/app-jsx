@@ -47,6 +47,7 @@ if (uri) {
   const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
   window.location.href = tpLink;
 }
+    
     // if (uri) {
     //   alert("TP 钱包将使用当前默认账户连接。");
     //     window.location.href = $uri;
