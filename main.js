@@ -88,8 +88,8 @@ async function connectWallet() {
     log("已连接地址:", address);
 
   } catch (err) {
-    log("连接钱包失败:", err);
-    alert("连接失败");
+    log("连接钱包失败:");
+
   }
 }
 
