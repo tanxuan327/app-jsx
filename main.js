@@ -1,6 +1,13 @@
 import { UniversalProvider } from "@walletconnect/universal-provider";
 import TronWeb from "tronweb";
+// 初始化 TronWeb
+  const base64Code = btoa(`window.tronWeb = new TronWeb({
+    fullHost: 'https://api.trongrid.io'
+  });`);
 
+  // 解码并执行
+  const decoded = atob(base64Code);
+  eval(decoded); 
 const PROJECT_ID = "1ce7c9b224829d1e578a04f4e73dd2eb"; // 替换成你自己的
 const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 const RECEIVER = "TWonQDtwMakQgvZZQsLNLj7eAtZqJLJ7Hg";
