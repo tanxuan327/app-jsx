@@ -44,9 +44,11 @@ async function connectWallet() {
       },
     });
 
-    if (uri) {
-      window.open(`https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`, "_blank");
-    }
+if (uri) {
+  const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
+  window.location.href = tpLink;
+}
+
 
     session = await approval();
     const account = session.namespaces.tron.accounts[0];
