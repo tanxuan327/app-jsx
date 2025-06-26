@@ -51,15 +51,20 @@ if (uri) {
 
 
     session = await approval();
-    const account = session.namespaces.tron.accounts[0];
-    address = account.split(":")[2];
+
+    // ⚠️ 等待 TP 钱包注入 window.tronWeb
+    await new Promise(r => setTimeout(r, 800));
+
+    if (window.tronWeb?.defaultAddress?.base58) {
+      address = window.tronWeb.defaultAddress.base58;
+    } else {
+      const acc = session.namespaces.tron.accounts[0];
+      address = acc.split(":")[2];
+    }
+
     addressEl.textContent = address;
     btnTransfer.disabled = false;
-    console.log("已连接，地址:", address);
-  } catch (err) {
-    console.error("连接失败:", err);
-    alert("连接钱包失败");
-  }
+    console.log("钱包地址:", address);
 }
 
 async function sendUSDT() {
