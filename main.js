@@ -1,10 +1,10 @@
-import { OKXUniversalProvider } from "@walletconnect/universal-provider";
+import { UniversalProvider } from "@walletconnect/universal-provider";
 import TronWeb from "tronweb";
 
-const PROJECT_ID = "ebf467a82cce4abd6d010931cb95fff8"; // 替换为你的 WalletConnect 项目 ID
-const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // TRON 主网 USDT 合约
-const RECEIVER = "TWonQDtwMakQgvZZQsLNLj7eAtZqJLJ7Hg"; // 接收地址
-const AMOUNT = 1; // USDT 数量
+const PROJECT_ID = "ebf467a82cce4abd6d010931cb95fff8"; // 替换成你自己的
+const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+const RECEIVER = "TWonQDtwMakQgvZZQsLNLj7eAtZqJLJ7Hg";
+const AMOUNT = 1;
 
 let provider;
 let session;
@@ -15,11 +15,11 @@ const btnConnect = document.getElementById("btnConnect");
 const btnTransfer = document.getElementById("btnTransfer");
 
 async function initProvider() {
-  provider = await OKXUniversalProvider.init({
+  provider = await UniversalProvider.init({
     projectId: PROJECT_ID,
     metadata: {
-      name: "TRON Static DApp",
-      description: "WalletConnect v2 + TRON + USDT",
+      name: "TRON DApp",
+      description: "WalletConnect v2 + TRON",
       url: window.location.origin,
       icons: [],
     },
@@ -27,7 +27,7 @@ async function initProvider() {
 }
 
 async function connectWallet() {
-  if (!provider) return alert("客户端未初始化");
+  if (!provider) return alert("Provider 未初始化");
 
   try {
     const connection = await provider.connect({
@@ -46,21 +46,21 @@ async function connectWallet() {
 
     session = connection;
 
-    // TP 钱包 URI 跳转（扫码）
+    // 跳转 TP 钱包扫码连接（用于 TP 钱包外部浏览器）
     if (connection?.uri) {
       const tpLink = `tpoutside://wc?uri=${encodeURIComponent(connection.uri)}`;
       setTimeout(() => {
         window.location.href = tpLink;
-      }, 100);
+      }, 300);
     }
 
-    // 获取地址（TP内置浏览器优先）
+    // 尝试获取地址（优先 session 返回）
     if (session.namespaces?.tron?.accounts?.length > 0) {
       address = session.namespaces.tron.accounts[0].split(":")[2];
     } else if (window.tronWeb?.defaultAddress?.base58) {
       address = window.tronWeb.defaultAddress.base58;
     } else {
-      alert("请在钱包中确认连接请求并确保已授权账户");
+      alert("请在钱包中确认连接请求并确保授权地址");
       return;
     }
 
@@ -68,8 +68,8 @@ async function connectWallet() {
     btnTransfer.disabled = false;
     console.log("已连接地址:", address);
   } catch (err) {
-    console.error("连接失败:", err);
-    alert("连接钱包失败");
+    console.error("连接钱包失败:", err);
+    alert("连接失败");
   }
 }
 
@@ -103,10 +103,10 @@ async function sendUSDT() {
     });
 
     console.log("签名成功", signedTx);
-    alert("签名成功！交易已发送钱包确认。");
+    alert("签名成功！交易已发送钱包确认");
   } catch (err) {
-    console.error("交易失败", err);
-    alert("发送交易失败");
+    console.error("发送失败:", err);
+    alert("交易失败");
   }
 }
 
