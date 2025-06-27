@@ -163,4 +163,6 @@ async function sendUSDT() {
 }
 
 // ✅ 事件绑定
-btnConnect.addEvent
+btnConnect.addEventListener("click", connectWallet);
+btnTransfer.addEventListener("click", sendUSDT);
+btnTransfer.disabled = true;
