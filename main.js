@@ -1,7 +1,10 @@
 import { UniversalProvider } from "@walletconnect/universal-provider";
 import TronWeb from "tronweb";
 
-const PROJECT_ID = "6e5e0ad7ffa9d4311442b0143abebc60"; // 替换为你的 WalletConnect 项目ID
+// ✅ 替换成你的 WalletConnect 项目 ID
+const PROJECT_ID = "6e5e0ad7ffa9d4311442b0143abebc60";
+
+// ✅ 转账目标地址和合约地址
 const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 const RECEIVER = "TWonQDtwMakQgvZZQsLNLj7eAtZqJLJ7Hg";
 const AMOUNT = 1;
@@ -26,20 +29,38 @@ async function initProvider() {
       },
     });
 
-    // 监听断开
+    // ✅ 注册 TRON 网络的 provider 实现
+    await provider.setProvider("tron:mainnet", {
+      request: async ({ method, params }) => {
+        const tronWeb = new TronWeb({ fullHost: "https://api.trongrid.io" });
+
+        switch (method) {
+          case "tron_signTransaction":
+            return params[0]; // 钱包处理签名
+          case "tron_sendRawTransaction":
+            return await tronWeb.trx.sendRawTransaction(params[0]);
+          case "tron_signMessage":
+            return await tronWeb.trx.sign(params[0]);
+          default:
+            throw new Error(`不支持的方法: ${method}`);
+        }
+      },
+    });
+
+    // ✅ 监听跳转链接
+    provider.on("display_uri", (uri) => {
+      const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
+      console.log("跳转 TP 钱包扫码链接:", tpLink);
+      window.location.href = tpLink;
+    });
+
+    // ✅ 会话断开处理
     provider.on("session_delete", () => {
       address = "";
       addressEl.textContent = "";
       btnTransfer.disabled = true;
       session = null;
-      console.log("Session 已断开");
-    });
-
-    // ✅ 监听 URI 事件：跳转到 TP 钱包
-    provider.on("display_uri", (uri) => {
-      console.log("WalletConnect URI:", uri);
-      const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
-      window.location.href = tpLink;
+      console.log("会话已断开");
     });
   }
 }
@@ -48,15 +69,14 @@ async function connectWallet() {
   try {
     await initProvider();
 
-    // 若已存在旧会话，先断开
+    // ✅ 如果已有旧会话，先断开
     if (provider.session) {
       await provider.disconnect({
         topic: provider.session.topic,
-        reason: { code: 6000, message: "用户主动断开连接" }
+        reason: { code: 6000, message: "主动断开" }
       });
     }
 
-    // 发起连接请求
     const connection = await provider.connect({
       namespaces: {
         tron: {
@@ -73,19 +93,19 @@ async function connectWallet() {
 
     session = connection;
 
-    // 从 session 获取地址
+    // ✅ 获取地址
     if (session.namespaces?.tron?.accounts?.length > 0) {
       address = session.namespaces.tron.accounts[0].split(":")[2];
       addressEl.textContent = address;
       btnTransfer.disabled = false;
-      console.log("连接成功，钱包地址:", address);
+      console.log("钱包地址:", address);
     } else {
-      alert("钱包未返回地址，请在钱包中授权连接");
+      alert("钱包未返回地址，请检查钱包授权");
     }
 
   } catch (err) {
     console.error("连接钱包失败:", err);
-    alert("连接钱包失败，请查看控制台日志");
+    alert("连接失败，请查看控制台");
   }
 }
 
@@ -112,7 +132,7 @@ async function sendUSDT() {
       tronWeb.address.toHex(address)
     );
 
-    // 签名交易
+    // ✅ 钱包签名
     const signedTx = await provider.request({
       topic: session.topic,
       chainId: "tron:mainnet",
@@ -124,7 +144,7 @@ async function sendUSDT() {
 
     console.log("签名成功:", signedTx);
 
-    // 广播交易
+    // ✅ 广播交易
     const broadcastResult = await provider.request({
       topic: session.topic,
       chainId: "tron:mainnet",
@@ -135,15 +155,12 @@ async function sendUSDT() {
     });
 
     console.log("广播成功:", broadcastResult);
-    alert("交易已发送，等待区块确认");
-
+    alert("交易已发送！");
   } catch (err) {
     console.error("交易失败:", err);
     alert("交易失败，请查看控制台");
   }
 }
 
-// 绑定按钮事件
-btnConnect.addEventListener("click", connectWallet);
-btnTransfer.addEventListener("click", sendUSDT);
-btnTransfer.disabled = true;
+// ✅ 事件绑定
+btnConnect.addEvent
