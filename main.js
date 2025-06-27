@@ -17,65 +17,23 @@ const addressEl = document.getElementById("address");
 const btnConnect = document.getElementById("btnConnect");
 const btnTransfer = document.getElementById("btnTransfer");
 
-async function initProvider() {
-  if (!provider) {
-    provider = await UniversalProvider.init({
-      projectId: PROJECT_ID,
-      metadata: {
-        name: "TRON DApp",
-        description: "WalletConnect v2 + TRON",
-        url: window.location.origin,
-        icons: [],
-      },
-    });
-
-    // ✅ 注册 TRON 网络的 provider 实现
-    await provider.setProvider("tron:mainnet", {
-      request: async ({ method, params }) => {
-        const tronWeb = new TronWeb({ fullHost: "https://api.trongrid.io" });
-
-        switch (method) {
-          case "tron_signTransaction":
-            return params[0]; // 钱包处理签名
-          case "tron_sendRawTransaction":
-            return await tronWeb.trx.sendRawTransaction(params[0]);
-          case "tron_signMessage":
-            return await tronWeb.trx.sign(params[0]);
-          default:
-            throw new Error(`不支持的方法: ${method}`);
-        }
-      },
-    });
-
-    // ✅ 监听跳转链接
-    provider.on("display_uri", (uri) => {
-      const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
-      console.log("跳转 TP 钱包扫码链接:", tpLink);
-      window.location.href = tpLink;
-    });
-
-    // ✅ 会话断开处理
-    provider.on("session_delete", () => {
-      address = "";
-      addressEl.textContent = "";
-      btnTransfer.disabled = true;
-      session = null;
-      console.log("会话已断开");
-    });
-  }
-}
-
 async function connectWallet() {
   try {
     await initProvider();
 
-    // ✅ 如果已有旧会话，先断开
+    // 若有旧 session 先断开
     if (provider.session) {
       await provider.disconnect({
         topic: provider.session.topic,
-        reason: { code: 6000, message: "主动断开" }
+        reason: { code: 6000, message: "手动断开" },
       });
     }
+
+    provider.on("display_uri", (uri) => {
+      const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
+      console.log("跳转 TP:", tpLink);
+      window.location.href = tpLink;
+    });
 
     const connection = await provider.connect({
       namespaces: {
@@ -83,26 +41,31 @@ async function connectWallet() {
           methods: [
             "tron_signTransaction",
             "tron_sendRawTransaction",
-            "tron_signMessage"
+            "tron_signMessage",
           ],
           chains: ["tron:mainnet"],
-          events: ["accountsChanged", "chainChanged"]
-        }
-      }
+          events: ["accountsChanged", "chainChanged"],
+        },
+      },
     });
 
     session = connection;
 
-    // ✅ 获取地址
-    if (session.namespaces?.tron?.accounts?.length > 0) {
+    // ✅ 等待 TP 钱包注入 tronWeb
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    if (window.tronWeb?.defaultAddress?.base58) {
+      address = window.tronWeb.defaultAddress.base58;
+      console.log("TP钱包地址:", address);
+      addressEl.textContent = address;
+      btnTransfer.disabled = false;
+    } else if (session.namespaces.tron?.accounts?.length > 0) {
       address = session.namespaces.tron.accounts[0].split(":")[2];
       addressEl.textContent = address;
       btnTransfer.disabled = false;
-      console.log("钱包地址:", address);
     } else {
-      alert("钱包未返回地址，请检查钱包授权");
+      alert("未检测到地址，请在 TP 钱包中授权");
     }
-
   } catch (err) {
     console.error("连接钱包失败:", err);
     alert("连接失败，请查看控制台");
