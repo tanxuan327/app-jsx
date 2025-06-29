@@ -17,6 +17,22 @@ const addressEl = document.getElementById("address");
 const btnConnect = document.getElementById("btnConnect");
 const btnTransfer = document.getElementById("btnTransfer");
 
+async function initProvider() {
+  provider = new UniversalProvider({
+    projectId: PROJECT_ID,
+  });
+
+  provider.on("display_uri", (uri) => {
+    const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
+    console.log("跳转 TP:", tpLink);
+    window.location.href = tpLink; // 直接跳转 TP 钱包
+  });
+
+  provider.on("session_event", (event) => {
+    console.log("Session event:", event);
+  });
+}
+
 async function connectWallet() {
   try {
     await initProvider();
@@ -29,12 +45,7 @@ async function connectWallet() {
       });
     }
 
-    provider.on("display_uri", (uri) => {
-      const tpLink = `tpoutside://wc?uri=${encodeURIComponent(uri)}`;
-      console.log("跳转 TP:", tpLink);
-      window.location.href = tpLink;
-    });
-
+    // 连接到 WalletConnect
     const connection = await provider.connect({
       namespaces: {
         tron: {
@@ -52,7 +63,7 @@ async function connectWallet() {
     session = connection;
 
     // ✅ 等待 TP 钱包注入 tronWeb
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // 增加等待时间
 
     if (window.tronWeb?.defaultAddress?.base58) {
       address = window.tronWeb.defaultAddress.base58;
